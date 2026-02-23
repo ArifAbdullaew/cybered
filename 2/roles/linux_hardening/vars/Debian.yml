@@ -1,0 +1,2 @@
+hardening_ssh_service_name: "ssh"
+hardening_pkg_fail2ban: "fail2ban"

@@ -80,7 +80,7 @@ resource "null_resource" "baz" {
     #password = var.root_password
     # если ключ лежит по нестандартному пути, указываем путь к этому файлу.
     # генерируем командой ssh-keygen
-    # private_key=""
+    private_key=file("/home/arif/.ssh/id_rsa")
 
     # Для Windows:
     # private_key = file("путь/до/файла/в/Windows") на швиндовс

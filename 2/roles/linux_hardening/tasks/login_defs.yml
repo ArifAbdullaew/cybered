@@ -1,0 +1,8 @@
+---
+- name: Configure login.defs parameters
+  lineinfile:
+    path: /etc/login.defs
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} {{ item.value }}"
+    create: yes
+  loop: "{{ hardening_login_defs_settings | dict2items }}"

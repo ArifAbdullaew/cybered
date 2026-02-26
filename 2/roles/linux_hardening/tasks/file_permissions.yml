@@ -1,0 +1,19 @@
+---
+- name: Set permissions on critical files (if exist)
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ hardening_critical_files }}"
+  when: item.path is exists
+
+
+- name: Set permissions on GRUB files (if exist)
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ hardening_grub_files }}"
+  when: item is exists

@@ -1,0 +1,14 @@
+---
+- name: Configure PAM cracklib
+  lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password.*pam_cracklib.so'
+    line: 'password requisite pam_cracklib.so try_first_pass retry=3 minlen=9 difok=4 minclass=4 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1'
+  when: ansible_os_family == "RedHat"
+
+- name: Configure pam_unix with sha512
+  lineinfile:
+    path: /etc/pam.d/system-auth
+    regexp: '^password.*pam_unix.so'
+    line: 'password sufficient pam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=5'
+  when: ansible_os_family == "RedHat"

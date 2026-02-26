@@ -1,0 +1,53 @@
+---
+- name: Disable DCCP and SCTP modules
+  copy:
+    dest: /etc/modprobe.d/hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      install dccp /bin/true
+      install sctp /bin/true
+
+- name: Configure kernel hardening sysctl
+  copy:
+    dest: /etc/sysctl.d/99-kernel-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      kernel.randomize_va_space = 2
+      kernel.exec-shield = 1
+  notify: Reload sysctl
+
+- name: Disable core dumps in limits.conf
+  lineinfile:
+    path: /etc/security/limits.conf
+    regexp: '^\*\s+hard\s+core'
+    line: '* hard core 0'
+
+- name: Disable suid_dumpable
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: '^fs.suid_dumpable'
+    line: 'fs.suid_dumpable = 0'
+  notify: Reload sysctl
+
+- name: Check for systemd coredump config
+  stat:
+    path: /etc/systemd/coredump.conf
+  register: coredump_conf
+
+- name: Disable systemd core storage
+  lineinfile:
+    path: /etc/systemd/coredump.conf
+    regexp: '^Storage='
+    line: 'Storage=none'
+  when: coredump_conf.stat.exists
+
+- name: Disable systemd core size
+  lineinfile:
+    path: /etc/systemd/coredump.conf
+    regexp: '^ProcessSizeMax='
+    line: 'ProcessSizeMax=0'
+  when: coredump_conf.stat.exists

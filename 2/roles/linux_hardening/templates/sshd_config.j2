@@ -1,0 +1,32 @@
+Port {{ hardening_ssh_port }}
+Protocol {{ hardening_ssh_protocol }}
+LogLevel {{ hardening_ssh_loglevel }}
+
+PermitRootLogin {{ hardening_ssh_permit_root_login }}
+PasswordAuthentication {{ hardening_ssh_password_authentication }}
+PermitEmptyPasswords {{ hardening_ssh_permit_empty_passwords }}
+
+IgnoreRhosts {{ hardening_ssh_ignore_rhosts }}
+
+X11Forwarding {{ hardening_ssh_x11_forwarding }}
+AllowTcpForwarding {{ hardening_ssh_allow_tcp_forwarding }}
+PermitTunnel {{ hardening_ssh_permit_tunnel }}
+PermitUserEnvironment {{ hardening_ssh_permit_user_environment }}
+
+MaxSessions {{ hardening_ssh_max_sessions }}
+MaxAuthTries {{ hardening_ssh_max_auth_tries }}
+
+ClientAliveInterval {{ hardening_ssh_client_alive_interval }}
+ClientAliveCountMax {{ hardening_ssh_client_alive_count_max }}
+
+{% if hardening_ssh_manage_crypto and hardening_ssh_ciphers|length > 0 %}
+Ciphers {{ hardening_ssh_ciphers | join(',') }}
+{% endif %}
+
+{% if hardening_ssh_manage_crypto and hardening_ssh_macs|length > 0 %}
+MACs {{ hardening_ssh_macs | join(',') }}
+{% endif %}
+
+{% if hardening_ssh_manage_crypto and hardening_ssh_kex_algorithms|length > 0 %}
+KexAlgorithms {{ hardening_ssh_kex_algorithms | join(',') }}
+{% endif %}

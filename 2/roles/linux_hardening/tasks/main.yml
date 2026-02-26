@@ -1,13 +1,13 @@
 ---
-- name: Set Timezone
-  community.general.timezone:
-    name: Europe/Moscow
-
 - name: Bootstrap python if needed
   include_tasks: bootstrap.yml
 
 - name: Gather facts (need OS detection)
   setup:
+
+- name: Gather package facts
+  package_facts:
+    manager: auto
 
 - name: Load OS-specific vars
   include_vars: "{{ ansible_os_family }}.yml"
@@ -20,3 +20,71 @@
       - "version={{ ansible_distribution_major_version }}"
       - "ssh_service={{ hardening_ssh_service_name }}"
       - "pkg_fail2ban={{ hardening_pkg_fail2ban }}"
+
+- name: Set Timezone
+  community.general.timezone:
+    name: Europe/Moscow
+
+- name: Configure NTP
+  include_tasks: ntp.yml
+  when: hardening_enable_ntp | bool
+
+- name: Install security packages
+  include_tasks: packages.yml
+
+- name: Disable autofs
+  include_tasks: autofs.yml
+
+- name: Configure GRUB
+  include_tasks: grub.yml
+
+- name: Configure RPM signature verification
+  include_tasks: rpm_gpgcheck.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Configure automatic security updates
+  include_tasks: auto_updates.yml
+
+- name: Remove unnecessary services and packages
+  include_tasks: remove_services.yml
+
+- name: Configure MOTD banner
+  include_tasks: motd.yml
+
+- name: PAM hardening
+  include_tasks: pam.yml
+
+- name: Configure password aging policy
+  include_tasks: password_policy.yml
+
+- name: Configure login.defs
+  include_tasks: login_defs.yml
+
+- name: Configure filesystem blacklist
+  include_tasks: fs_blacklist.yml
+
+- name: Configure critical file permissions
+  include_tasks: file_permissions.yml
+
+- name: Configure cron and at allow lists
+  include_tasks: cron_at.yml
+
+- name: Filesystem audit and safe fixes
+  include_tasks: fs_audit_and_fixes.yml
+
+- name: Audit unsafe user settings
+  include_tasks: users_audit.yml
+  when: hardening_audit_users | bool
+
+- name: Configure network sysctl
+  include_tasks: sysctl_network.yml
+  when: hardening_manage_network_sysctl | bool
+
+- name: Configure kernel hardening
+  include_tasks: kernel_hardening.yml
+
+- name: Hardening SSH
+  include_tasks: ssh.yml
+
+- name: Configure sudo and su restrictions
+  include_tasks: sudo_su.yml

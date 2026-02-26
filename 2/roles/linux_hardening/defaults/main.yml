@@ -1,0 +1,179 @@
+hardening_enable_ntp: true
+hardening_ntp_package: "chrony"
+hardening_ntp_service: "chrony"
+
+hardening_install_fail2ban: true
+hardening_fail2ban_package: "fail2ban"
+hardening_fail2ban_service: "fail2ban"
+hardening_fail2ban_manage_jail: false
+
+hardening_backup_ssh_config: true
+hardening_ssh_port: 22
+hardening_ssh_loglevel: "VERBOSE"
+hardening_ssh_protocol: 2
+hardening_ssh_permit_root_login: "no"
+hardening_ssh_password_authentication: "no"
+hardening_ssh_permit_empty_passwords: "no"
+hardening_ssh_ignore_rhosts: "yes"
+hardening_ssh_x11_forwarding: "no"
+hardening_ssh_allow_tcp_forwarding: "no"
+hardening_ssh_permit_tunnel: "no"
+hardening_ssh_permit_user_environment: "no"
+
+hardening_ssh_max_sessions: 2
+hardening_ssh_max_auth_tries: 3
+hardening_ssh_client_alive_interval: 300
+hardening_ssh_client_alive_count_max: 0
+
+hardening_ssh_manage_crypto: false
+hardening_ssh_ciphers: []
+hardening_ssh_macs: []
+hardening_ssh_kex_algorithms: []
+
+hardening_disable_autofs: true
+hardening_autofs_service_name: "autofs"
+
+hardening_grub_manage: true
+hardening_grub_kernel_params:
+  - "ipv6.disable=1"
+  - "audit=1"
+  - "audit_backlog_limit=8192"
+
+hardening_enable_auto_updates: true
+
+hardening_remove_services:
+  - rlogin.socket
+  - rexec.socket
+  - rsh.socket
+  - tftp.service
+  - xinetd.service
+  - vsftpd.service
+  - avahi-daemon.service
+  - snmpd.service
+  - named.service
+  - smb.service
+  - httpd.service
+  - nginx.service
+  - rhnsd.service
+  - squid.service
+  - dhcpd.service
+  - dovecot.service
+  - rpcbind.service
+  - nfs.service
+  - cups.service
+
+hardening_remove_packages:
+  - rsh
+  - ypserv
+  - talk
+  - talk-server
+  - xorg-x11-server-common
+  - openldap-servers
+
+hardening_exclude_services: []
+hardening_exclude_packages: []
+
+hardening_sudo_use_pty: true
+hardening_sudo_logfile: "/var/log/sudo.log"
+
+hardening_sudo_whitelist_enable: false
+hardening_sudo_group: "limitedops"
+hardening_sudo_whitelist_commands: 
+  - "/sbin/service httpd start"
+  - "/sbin/service httpd stop"
+  - "/sbin/service httpd restart"
+
+hardening_su_restrict: true
+hardening_su_deny_group: "nosu"
+
+hardening_login_defs_settings:
+  CREATE_HOME: "yes"
+  ENCRYPT_METHOD: "SHA512"
+  FAIL_DELAY: "3"
+  FAILLOG_ENAB: "yes"
+  LOG_OK_LOGINS: "yes"
+  LOG_UNKFAIL_ENAB: "no"
+  OBSCURE_CHECKS_ENAB: "yes"
+  PASS_ALWAYS_WARN: "yes"
+  PASS_MAX_DAYS: "90"
+  PASS_MIN_LEN: "9"
+  PASS_WARN_AGE: "7"
+  UMASK: "027"
+  USERGROUPS_ENAB: "yes"
+
+hardening_blacklist_filesystems:
+  - cramfs
+  - freevsx
+  - jffs2
+  - hfs
+  - hfsplus
+  - squashfs
+  - udf
+
+hardening_critical_files:
+  - { path: "/etc/passwd", owner: "root", group: "root", mode: "0644" }
+  - { path: "/etc/passwd-", owner: "root", group: "root", mode: "0644" }
+  - { path: "/etc/group", owner: "root", group: "root", mode: "0644" }
+  - { path: "/etc/group-", owner: "root", group: "root", mode: "0644" }
+  - { path: "/etc/shadow", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/shadow-", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/gshadow", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/gshadow-", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/ssh/sshd_config", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/crontab", owner: "root", group: "root", mode: "0600" }
+  - { path: "/etc/cron.hourly", owner: "root", group: "root", mode: "0700" }
+  - { path: "/etc/cron.daily", owner: "root", group: "root", mode: "0700" }
+  - { path: "/etc/cron.weekly", owner: "root", group: "root", mode: "0700" }
+  - { path: "/etc/cron.monthly", owner: "root", group: "root", mode: "0700" }
+  - { path: "/etc/cron.d", owner: "root", group: "root", mode: "0600" }
+
+hardening_grub_files:
+  - "/etc/grub.cfg"
+  - "/boot/grub2/grubenv"
+  - "/boot/grub2/grub.cfg"
+
+hardening_fix_ssh_host_keys: true
+hardening_fix_var_log_perms: true
+
+hardening_audit_only: true
+
+hardening_aggressive_fs_fixes: false
+
+hardening_home_dir_mode: "0750"
+
+hardening_audit_report_path: "/var/log/hardening_audit_report.txt"
+
+hardening_audit_users: true
+hardening_users_audit_report_path: "/var/log/hardening_users_audit.txt"
+
+hardening_manage_network_sysctl: true
+hardening_network_sysctl_path: "/etc/sysctl.d/network-stack.conf"
+
+hardening_network_sysctl_params:
+  net.ipv6.conf.default.accept_redirects: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_ra: 0
+  net.ipv6.conf.all.accept_ra: 0
+  net.ipv6.conf.all.disable_ipv6: 1
+
+  net.ipv4.conf.default.accept_source_route: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.secure_redirects: 0
+  net.ipv4.conf.all.secure_redirects: 0
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.conf.default.log_martians: 1
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.ip_forward: 0
+  net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.conf.all.send_redirects: 0
+
+  net.ipv4.tcp_fin_timeout: 30
+  net.ipv4.tcp_keepalive_time: 180
+  net.ipv4.tcp_keepalive_intvl: 10
+  net.ipv4.tcp_keepalive_probes: 3

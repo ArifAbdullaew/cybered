@@ -1,0 +1,12 @@
+---
+- name: Check if autofs is installed
+  service_facts:
+
+- name: Disable autofs service
+  systemd:
+    name: "{{ hardening_autofs_service_name }}"
+    state: stopped
+    enabled: false
+  when: 
+    - hardening_disable_autofs | bool
+    - hardening_autofs_service_name + '.service' in ansible_facts.services

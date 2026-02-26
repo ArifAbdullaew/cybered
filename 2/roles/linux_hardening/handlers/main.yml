@@ -1,0 +1,24 @@
+---
+- name: Validate SSH config
+  command: sshd -t -f /etc/ssh/sshd_config
+  listen: Restart SSH
+
+- name: Restart SSH service
+  systemd:
+    name: "{{ hardening_ssh_service_name }}"
+    state: restarted
+  listen: Restart SSH
+
+- name: Update GRUB (Debian)
+  command: update-grub
+  when: ansible_os_family == "Debian"
+  listen: Update GRUB
+
+- name: Update GRUB (RedHat)
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  when: ansible_os_family == "RedHat"
+  listen: Update GRUB
+
+- name: Reload sysctl
+  command: sysctl --system
+  listen: Reload sysctl

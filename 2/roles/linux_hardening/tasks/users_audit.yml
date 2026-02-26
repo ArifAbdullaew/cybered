@@ -1,0 +1,35 @@
+---
+- name: Audit users with empty password field in /etc/shadow
+  shell: |
+    set -e
+    awk -F: '($2 == "" ) { print $1 " does not have a password "}' /etc/shadow || true
+  args:
+    executable: /bin/bash
+  register: empty_pw_users
+  changed_when: false
+  failed_when: false
+
+- name: Audit users with UID 0
+  shell: |
+    set -e
+    awk -F: '($3 == 0) { print $1 }' /etc/passwd || true
+  args:
+    executable: /bin/bash
+  register: uid0_users
+  changed_when: false
+  failed_when: false
+
+- name: Write users audit report
+  copy:
+    dest: "{{ hardening_users_audit_report_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      === Users audit report ===
+
+      [1] Users with empty password field in /etc/shadow:
+      {{ empty_pw_users.stdout | default('') }}
+
+      [2] Users with UID=0:
+      {{ uid0_users.stdout | default('') }}

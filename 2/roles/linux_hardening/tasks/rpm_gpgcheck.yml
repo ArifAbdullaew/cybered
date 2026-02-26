@@ -1,0 +1,18 @@
+---
+- name: Ensure gpgcheck is enabled in yum.conf
+  lineinfile:
+    path: /etc/yum.conf
+    regexp: '^gpgcheck='
+    line: 'gpgcheck=1'
+    create: yes
+  when: 
+    - ansible_os_family == "RedHat"
+    - ansible_facts['distribution'] != "Fedora"
+
+- name: Ensure gpgcheck is enabled in dnf.conf
+  lineinfile:
+    path: /etc/dnf/dnf.conf
+    regexp: '^gpgcheck='
+    line: 'gpgcheck=1'
+    create: yes
+  when: ansible_os_family == "RedHat"

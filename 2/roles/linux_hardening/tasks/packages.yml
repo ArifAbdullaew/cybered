@@ -1,0 +1,18 @@
+---
+- name: Install fail2ban package
+  package:
+    name: "{{ hardening_fail2ban_package }}"
+    state: present
+  when: hardening_install_fail2ban | bool
+
+- name: Enable fail2ban service
+  systemd:
+    name: "{{ hardening_fail2ban_service }}"
+    enabled: true
+  when: hardening_install_fail2ban | bool
+
+- name: Start fail2ban service
+  systemd:
+    name: "{{ hardening_fail2ban_service }}"
+    state: started
+  when: hardening_install_fail2ban | bool

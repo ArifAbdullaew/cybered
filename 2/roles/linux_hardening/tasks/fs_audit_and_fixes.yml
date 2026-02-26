@@ -1,0 +1,194 @@
+---
+- name: "Fix SSH host private keys permissions (0600 root:root)"
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ ssh_host_priv.files | default([]) }}"
+  when: hardening_fix_ssh_host_keys | bool
+  vars:
+    ssh_host_priv: "{{ lookup('ansible.builtin.fileglob', '/etc/ssh/ssh_host_*_key', wantlist=True) }}"
+  tags: ['ssh_keys']
+  changed_when: false
+  failed_when: false
+
+- name: "Find SSH host private keys"
+  find:
+    paths: /etc/ssh
+    patterns: "ssh_host_*_key"
+    file_type: file
+    recurse: false
+  register: ssh_host_priv_keys
+  when: hardening_fix_ssh_host_keys | bool
+  tags: ['ssh_keys']
+
+- name: Enforce permissions on SSH host private keys
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ ssh_host_priv_keys.files }}"
+  when: hardening_fix_ssh_host_keys | bool
+  tags: ['ssh_keys']
+
+- name: "Find SSH host public keys"
+  find:
+    paths: /etc/ssh
+    patterns: "ssh_host_*_key.pub"
+    file_type: file
+    recurse: false
+  register: ssh_host_pub_keys
+  when: hardening_fix_ssh_host_keys | bool
+  tags: ['ssh_keys']
+
+- name: "Enforce permissions on SSH host public keys (0644 root:root)"
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ ssh_host_pub_keys.files }}"
+  when: hardening_fix_ssh_host_keys | bool
+  tags: ['ssh_keys']
+
+
+- name: "Find overly-permissive items under /var/log (files perm /037 or dirs perm /026)"
+  shell: |
+    set -e
+    find /var/log \
+      \( -type f -perm /037 -print \) -o \
+      \( -type d -perm /026 -print \)
+  args:
+    executable: /bin/bash
+  register: varlog_bad
+  changed_when: false
+  failed_when: false
+  when: hardening_fix_var_log_perms | bool
+  tags: ['varlog']
+
+- name: "Fix permissions under /var/log (files: g-wx,o-rwx; dirs: g-w,o-rwx)"
+  shell: |
+    set -e
+    # Files
+    find /var/log -type f -exec chmod g-wx,o-rwx {} +
+    # Directories
+    find /var/log -type d -exec chmod g-w,o-rwx {} +
+  args:
+    executable: /bin/bash
+  when: hardening_fix_var_log_perms | bool and not hardening_audit_only | bool
+  tags: ['varlog']
+
+- name: "Collect local mount points (df --local)"
+  shell: |
+    set -e
+    df --local -P | awk 'NR!=1 {print $6}'
+  args:
+    executable: /bin/bash
+  register: local_mounts
+  changed_when: false
+  tags: ['audit']
+
+- name: "Audit - world-writable executable files"
+  shell: |
+    set -e
+    {% for m in local_mounts.stdout_lines %}
+    find {{ m | quote }} -xdev -type f -perm -0002 -executable -print
+    {% endfor %}
+  args:
+    executable: /bin/bash
+  register: audit_world_writable_exec
+  changed_when: false
+  failed_when: false
+  tags: ['audit']
+
+- name: "Audit - files/dirs with no user owner (nouser)"
+  shell: |
+    set -e
+    {% for m in local_mounts.stdout_lines %}
+    find {{ m | quote }} -xdev -nouser -print
+    {% endfor %}
+  args:
+    executable: /bin/bash
+  register: audit_nouser
+  changed_when: false
+  failed_when: false
+  tags: ['audit']
+
+- name: "Audit - files/dirs with no group owner (nogroup)"
+  shell: |
+    set -e
+    {% for m in local_mounts.stdout_lines %}
+    find {{ m | quote }} -xdev -nogroup -print
+    {% endfor %}
+  args:
+    executable: /bin/bash
+  register: audit_nogroup
+  changed_when: false
+  failed_when: false
+  tags: ['audit']
+
+- name: "Audit - SUID/SGID executables"
+  shell: |
+    set -e
+    {% for m in local_mounts.stdout_lines %}
+    find {{ m | quote }} -xdev -type f \( -perm -4000 -o -perm -2000 \) -print
+    {% endfor %}
+  args:
+    executable: /bin/bash
+  register: audit_suid_sgid
+  changed_when: false
+  failed_when: false
+  tags: ['audit']
+
+- name: "Audit - home directory permissions (should be 0750 or stricter)"
+  shell: |
+    set -e
+    awk -F: '$3>=1000 && $7 !~ /(false|nologin)$/ {print $6}' /etc/passwd | while read -r h; do
+      [ -d "$h" ] && stat -c "%a %n" "$h" || true
+    done
+  args:
+    executable: /bin/bash
+  register: audit_home_perms
+  changed_when: false
+  failed_when: false
+  tags: ['audit']
+
+- name: "Write audit report to file"
+  copy:
+    dest: "{{ hardening_audit_report_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      === Hardening audit report ===
+
+      [1] /var/log suspicious items (if any):
+      {{ varlog_bad.stdout | default('N/A') }}
+
+      [2] World-writable executable files:
+      {{ audit_world_writable_exec.stdout | default('') }}
+
+      [3] Files/dirs with no user owner (nouser):
+      {{ audit_nouser.stdout | default('') }}
+
+      [4] Files/dirs with no group owner (nogroup):
+      {{ audit_nogroup.stdout | default('') }}
+
+      [5] SUID/SGID executables:
+      {{ audit_suid_sgid.stdout | default('') }}
+
+      [6] Home dir permissions (mode path):
+      {{ audit_home_perms.stdout | default('') }}
+  tags: ['audit']
+
+- name: "Fix home directory permissions to 0750 (DANGEROUS)"
+  file:
+    path: "{{ item }}"
+    mode: "{{ hardening_home_dir_mode }}"
+  loop: "{{ audit_home_dirs }}"
+  when: hardening_aggressive_fs_fixes | bool
+  vars:
+    audit_home_dirs: "{{ audit_home_perms.stdout_lines | map('regex_replace', '^\\d+\\s+', '') | list }}"
+  tags: ['aggressive']

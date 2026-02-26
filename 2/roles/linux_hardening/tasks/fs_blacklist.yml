@@ -1,0 +1,15 @@
+---
+- name: Ensure modprobe blacklist file exists
+  file:
+    path: /etc/modprobe.d/blacklist.conf
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Blacklist unused filesystems
+  lineinfile:
+    path: /etc/modprobe.d/blacklist.conf
+    line: "blacklist {{ item }}"
+    state: present
+  loop: "{{ hardening_blacklist_filesystems }}"

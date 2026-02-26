@@ -1,0 +1,15 @@
+---
+- name: Install NTP package
+  package:
+    name: "{{ hardening_ntp_package }}"
+    state: present
+
+- name: Enable NTP service
+  systemd:
+    name: "{{ hardening_ntp_service }}"
+    enabled: true
+
+- name: Start NTP service
+  systemd:
+    name: "{{ hardening_ntp_service }}"
+    state: started

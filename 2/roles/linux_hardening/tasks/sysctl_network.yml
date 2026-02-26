@@ -1,0 +1,10 @@
+---
+- name: Write network stack sysctl config
+  template:
+    src: "network-stack.conf.j2"
+    dest: "{{ hardening_network_sysctl_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload sysctl
+  when: hardening_manage_network_sysctl | bool
